@@ -97,8 +97,16 @@ def get_snapshot():
                     for i in db.keys():
                         wallet = db[i]['wallet']
                         slp = requests.get(f'https://game-api.skymavis.com/game-api/clients/{wallet}/items/1').json()['total']
-                        list.append((i,slp))
-            
+
+                        
+                        if slp > int(db[i]['slp']):
+                            slp_new = slp-int(db[i]['slp'])
+                        else:
+                            slp_new = slp
+                            
+                        db[i]['slp'] = slp    
+                        list.append((i,slp_new))
+
                     list.sort(key=lambda x:x[1], reverse=True)
                     stand = 'Weekly Snapshot:\n'
                     
@@ -106,9 +114,10 @@ def get_snapshot():
                         stand += f'{i[0]} : {i[1]}\n'
                         
                     app.send_message(user,stand)
-                # else:
-                    # message.reply_text('no tienes scholars :(')
-                pass  
+                
+                    write_data(user,db)
+
+    pass  
 
 def scheduler_snapshot():
     from apscheduler.schedulers.background import BackgroundScheduler
