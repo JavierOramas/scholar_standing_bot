@@ -7,6 +7,10 @@ import requests
 import schedule
 import time
 
+def get_value_usd(sum):
+    price = requests.get('https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0xcc8fa225d80b9c7d42f96e9570156c65d6caaa25&vs_currencies=usd').json()['0xcc8fa225d80b9c7d42f96e9570156c65d6caaa25']['usd']
+    return price*sum
+
 def read_data(id):
     id = str(id)
 
@@ -27,6 +31,8 @@ app = Client(config_data['bot_user_name'], config_data['api_id'], config_data['a
 @app.on_message(filters.command('add'))
 def add_scholar(client, message):
     users = message.text.split()
+    if len(users) != 3:
+         message.reply_text("formato incorrecto, debe ser de la forma: \n /add pedro 0x000000000")
     name = str(users[-2])
     wallet = str(users[-1])
     
@@ -40,6 +46,7 @@ def add_scholar(client, message):
                     "slp": "0"
                     }
         write_data(message.chat.id,db)
+        message.reply_text("Añadido con éxito")
     else:
         message.reply_text("Ya tienes un scholar con ese nombre")
     pass
@@ -78,7 +85,7 @@ def see_fee(client, message):
         list.sort(key=lambda x:x[1], reverse=True)
         stand = ''
         for i in list:
-            stand += f'{i[0]} : {i[1]}\n'
+            stand += f'{i[0]} : {i[1]} - ${get_value_usd(i[1])}\n'
         message.reply_text(stand)
     else:
         message.reply_text('no tienes scholars :(')
@@ -104,27 +111,20 @@ def get_snapshot():
                         else:
                             slp_new = slp
                             
-                        db[i]['slp'] = slp    
+                        db[i]['slp'] = slp
                         list.append((i,slp_new))
 
                     list.sort(key=lambda x:x[1], reverse=True)
                     stand = 'Weekly Snapshot:\n'
                     
                     for i in list:
-                        stand += f'{i[0]} : {i[1]}\n'
+                        stand += f'{i[0]} : {i[1]} - ${get_value_usd(i[1])}\n'
                         
                     app.send_message(user,stand)
                 
                     write_data(user,db)
 
-    pass  
-
-def scheduler_snapshot():
-    from apscheduler.schedulers.background import BackgroundScheduler
-    
-    sched = BackgroundScheduler()
-    sched.add_job(get_snapshot, 'cron', day_of_week='sun', hour=8, minute=0)
-    sched.start()
+    pass
 
 @app.on_message(filters.command('help'))
 @app.on_message(filters.command('start'))
@@ -138,6 +138,9 @@ def help(client, message):
     """)
     pass
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+scheduler = AsyncIOScheduler()
+scheduler.add_job(get_snapshot, "interval", seconds=604800)
 
-scheduler_snapshot()
+scheduler.start()
 app.run()
