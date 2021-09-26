@@ -139,7 +139,7 @@ def help(client, message):
     pass
 
 scheduler = AsyncIOScheduler()
-scheduler.add_job(get_snapshot, "interval",'cron', hour=20)
+scheduler.add_job(get_snapshot,'cron', hour=20)
 
 scheduler.start()
 app.run()
