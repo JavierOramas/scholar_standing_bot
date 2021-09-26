@@ -106,7 +106,7 @@ def get_snapshot():
                         slp = requests.get(f'https://game-api.skymavis.com/game-api/clients/{wallet}/items/1').json()['total']
 
                         
-                        if slp > int(db[i]['slp']):
+                        if slp >= int(db[i]['slp']):
                             slp_new = slp-int(db[i]['slp'])
                         else:
                             slp_new = slp
@@ -139,7 +139,7 @@ def help(client, message):
     pass
 
 scheduler = AsyncIOScheduler()
-scheduler.add_job(get_snapshot, "interval", seconds=86400)
+scheduler.add_job(get_snapshot, "interval",'cron', hour=20)
 
 scheduler.start()
 app.run()
