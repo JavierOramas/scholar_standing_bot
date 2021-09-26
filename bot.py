@@ -1,5 +1,6 @@
 #! /root/anaconda3/bin/python
 import os
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pyrogram import Client, filters
 from read_config import read_config
 import json
@@ -93,13 +94,12 @@ def see_fee(client, message):
 
 # @app.on_message(filters.command('help'))
 def get_snapshot():
-    
     for cp,dir,files in os.walk('./db/'):
         for file in files:
             if file.endswith('.json'):
-                user = file[:len('.json')]
+                user = file[:-len('.json')]
                 db = read_data(user)
-        
+                list = []
                 if len(db.keys()) > 0:
                     for i in db.keys():
                         wallet = db[i]['wallet']
@@ -113,14 +113,14 @@ def get_snapshot():
                             
                         db[i]['slp'] = slp
                         list.append((i,slp_new))
-
                     list.sort(key=lambda x:x[1], reverse=True)
-                    stand = 'Weekly Snapshot:\n'
+                    stand = 'Daily Snapshot:\n'
                     
                     for i in list:
                         stand += f'{i[0]} : {i[1]} - ${get_value_usd(i[1])}\n'
-                        
-                    app.send_message(user,stand)
+                    
+                    print(user)
+                    app.send_message(int(user),stand)
                 
                     write_data(user,db)
 
@@ -138,9 +138,8 @@ def help(client, message):
     """)
     pass
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 scheduler = AsyncIOScheduler()
-scheduler.add_job(get_snapshot, "interval", seconds=604800)
+scheduler.add_job(get_snapshot, "interval", seconds=86400)
 
 scheduler.start()
 app.run()
