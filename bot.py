@@ -44,7 +44,7 @@ def add_scholar(client, message):
     if not name in db:
         db[name] = {
                     "wallet": wallet,
-                    "slp": "0"
+                    "slp": "[0]"
                     }
         write_data(message.chat.id,db)
         message.reply_text("Añadido con éxito")
@@ -92,39 +92,30 @@ def see_fee(client, message):
         message.reply_text('no tienes scholars :(')
     pass
 
-# @app.on_message(filters.command('help'))
-def get_snapshot():
-    for cp,dir,files in os.walk('./db/'):
-        for file in files:
-            if file.endswith('.json'):
-                user = file[:-len('.json')]
-                db = read_data(user)
-                list = []
-                if len(db.keys()) > 0:
-                    for i in db.keys():
-                        wallet = db[i]['wallet']
-                        slp = requests.get(f'https://game-api.skymavis.com/game-api/clients/{wallet}/items/1').json()['total']
-
-                        
-                        if slp >= int(db[i]['slp']):
-                            slp_new = slp-int(db[i]['slp'])
-                        else:
-                            slp_new = slp
-                            
-                        db[i]['slp'] = slp
-                        list.append((i,slp_new))
-                    list.sort(key=lambda x:x[1], reverse=True)
-                    stand = 'Daily Snapshot:\n'
-                    
-                    for i in list:
-                        stand += f'{i[0]} : {i[1]} - ${get_value_usd(i[1])}\n'
-                    
-                    print(user)
-                    app.send_message(int(user),stand)
-                
-                    write_data(user,db)
-
+@app.on_message(filters.command('week'))
+def see_fee(client, message):
+    # owner_id = app.get_users(message.chat.id)
+    
+    os.makedirs("./db", exist_ok=True)
+    db = read_data(message.chat.id)
+    list = []
+    
+    if len(db.keys()) > 0:
+        for i in db.keys():
+            slp = sum(db[i]['slp'])
+            list.append((i,slp))
+            
+        list.sort(key=lambda x:x[1], reverse=True)
+        stand = ''
+        for i in list:
+            stand += f'{i[0]} : {i[1]} - ${get_value_usd(i[1])}\n'
+        message.reply_text(stand)
+    else:
+        message.reply_text('no tienes scholars :(')
     pass
+
+# @app.on_message(filters.command('help'))
+
 
 @app.on_message(filters.command('help'))
 @app.on_message(filters.command('start'))
@@ -137,9 +128,3 @@ def help(client, message):
     Puedes contribuir con el desarrollo aqui: https://github.com/JavierOramas/scholar_standing_bot\no puedes donar para contribuir al desarrollo: 0x64eF391bb5Feae6023440AD12a9870062dd2B342
     """)
     pass
-
-scheduler = AsyncIOScheduler()
-scheduler.add_job(get_snapshot,'cron', hour=20)
-
-scheduler.start()
-app.run()
