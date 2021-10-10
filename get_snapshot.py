@@ -26,21 +26,26 @@ def get_snapshot():
                 user = file[:-len('.json')]
                 db = read_data(user)
                 list = []
+                print(db)
                 if len(db.keys()) > 0:
                     for i in db.keys():
                         wallet = db[i]['wallet']
+                        yesterday = db[i]['yesterday']
                         slp = requests.get(f'https://game-api.skymavis.com/game-api/clients/{wallet}/items/1').json()['total']
 
 
-                        if slp >= int(db[i]['slp'][-1]):
-                            slp_new = slp-int(db[i]['slp'][-1])
+                        if slp >= yesterday:
+                            slp_new = slp-yesterday
                         else:
                             slp_new = slp
 
                         db[i]['slp'].append(slp_new)
+                        db[i]['yesterday'] = slp
                         if len(db[i]['slp']) > 14:
                             db[i]['slp'] = db[i]['slp'][-14:]
                         list.append((i,slp_new))
                     write_data(user,db)
 
     pass
+
+get_snapshot()
