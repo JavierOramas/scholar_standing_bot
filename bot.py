@@ -128,3 +128,8 @@ def help(client, message):
     Puedes contribuir con el desarrollo aqui: https://github.com/JavierOramas/scholar_standing_bot\no puedes donar para contribuir al desarrollo: 0x64eF391bb5Feae6023440AD12a9870062dd2B342
     """)
     pass
+scheduler = AsyncIOScheduler()
+scheduler.add_job(get_snapshot,'cron', hour=20)
+
+scheduler.start()
+app.run()
